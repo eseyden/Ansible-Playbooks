@@ -1,0 +1,43 @@
+- hosts: ericseyden.com
+  tasks:
+    - name: Add admins group
+      become: yes
+      ansible.builtin.group:
+        name: admins
+        state: present
+
+    - name: Add webmasters group
+      become: yes
+      ansible.builtin.group:
+        name: webmasters
+        state: present
+
+    - name: Add eseyden user
+      become: yes
+      ansible.builtin.user:
+        name: eseyden
+        groups: admins, wheel, webmasters
+
+    - name: Set authorized key
+      ansible.posix.authorized_key:
+        user: eseyden
+        state: present
+        key: "{{ lookup('file', lookup('env', 'HOME') + '/.ssh/id_rsa.pub' ) }}"
+
+    - name: Grant passwordless sudo access
+      become: yes
+      lineinfile:
+        dest: /etc/sudoers
+        line: "%admins ALL=(ALL) NOPASSWD: ALL"
+        validate: visudo -cf %s
+        insertafter: EOF
+        state: present
+
+    - name: Install Required Packages
+      become: yes
+      package:
+        name:
+          - vim
+          - tmux
+          - git
+        state: present

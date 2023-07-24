@@ -1,0 +1,16 @@
+{{ item }} {
+    redir https://www.{{item}}.com permanent
+}
+www.{{item}} {
+{% if item == "ericseyden.com" %}
+    reverse_proxy localhost:3000
+{% else %}
+    root * /var/www/html/{{ item }}/public
+    php_fastcgi unix//run/php-fpm/www.sock
+    file_server
+    encode gzip
+    {% endif %}
+    log {
+        output file /var/log/caddy/{{item}}-access.log
+    }
+}

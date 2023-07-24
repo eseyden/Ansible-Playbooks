@@ -1,0 +1,129 @@
+- hosts: ericseyden.com
+  become: true
+  vars:
+    domains:
+      - ericseyden.com
+      - fatalexe.com
+      - seyden.net
+  tasks:
+    - name: Add webmasters group
+      ansible.builtin.group:
+        name: webmasters
+        state: present
+
+    - name: Install Required Packages
+      package:
+        name:
+          - php
+          - php-fpm
+          - php-mysqlnd
+          - php-gd
+          - php-json
+        state: present
+      notify:
+        - Enable PHP-FPM
+
+    - name: Install Caddy
+      package:
+        name: caddy
+        state: present
+      notify:
+        - Enable Caddy
+
+    - name: Add Caddy configuration files
+      template:
+        src: templates/caddy_config.j2
+        dest: "/etc/caddy/Caddyfile.d/{{ item }}.caddyfile"
+      with_items: "{{ domains }}"
+      notify:
+        - Restart Caddy
+
+    - name: Create log directory
+      file:
+        path: /var/log/caddy/
+        state: directory
+        owner: caddy
+        group: caddy
+
+    - name: Create content directories
+      file:
+        path: /var/www/html/{{item}}
+        state: directory
+        owner: caddy
+        group: webmasters
+        mode: "774"
+      with_items: "{{ domains }}"
+
+    - name: Create public content directories
+      file:
+        path: /var/www/html/{{item}}/public
+        state: directory
+        owner: caddy
+        group: webmasters
+        mode: "774"
+      with_items: "{{ domains }}"
+
+    - name: Update PHP-FPM www.conf for Caddy user
+      lineinfile:
+        path: /etc/php-fpm.d/www.conf
+        regexp: "^user = "
+        line: "user = caddy"
+        backup: yes
+      notify:
+        - Restart PHP-FPM
+
+    - name: Update PHP-FPM www.conf for Caddy group
+      lineinfile:
+        path: /etc/php-fpm.d/www.conf
+        regexp: "^group = "
+        line: "group = caddy"
+        backup: yes
+      notify:
+        - Restart PHP-FPM
+
+    - name: Add Caddy to listen.acl_users
+      lineinfile:
+        path: /etc/php-fpm.d/www.conf
+        regexp: "^listen.acl_users = "
+        line: "listen.acl_users = apache,nginx,caddy"
+        backup: yes
+      notify:
+        - Restart PHP-FPM
+
+    - name: Check if Composer is Installed
+      stat:
+        path: /usr/local/bin/composer
+      register: composer_bin
+
+    - name: Download Composer installer
+      shell: "curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer"
+      when: not composer_bin.stat.exists
+
+    - name: Make Composer executable
+      file:
+        path: /usr/local/bin/composer
+        mode: "0755"
+      when: not composer_bin.stat.exists
+
+  handlers:
+    - name: Restart Caddy
+      systemd:
+        name: caddy
+        state: restarted
+
+    - name: Restart PHP-FPM
+      systemd:
+        name: php-fpm
+        state: restarted
+
+    - name: Enable Caddy
+      systemd:
+        name: caddy
+        enabled: yes
+        state: started
+
+    - name: Enable PHP-FPM
+      systemd:
+        name: php-fpm
+        enabled: yes
+        state: started

@@ -1,0 +1,28 @@
+- hosts: ericseyden.com
+  tasks:
+    - name: Check current Fedora version
+      command: cat /etc/fedora-release
+      register: current_version
+      changed_when: false
+
+    - name: Update all packages
+      dnf:
+        upgrade: yes
+        update_cache: yes
+      when: current_version.stdout.find("Fedora 37") != -1
+
+    - name: Install system upgrade DNF Plugin
+      dnf:
+        name: dnf-plugin-system-upgrade
+        state: present
+      when: current_version.stdout.find("Fedora 37") != -1
+
+    - name: Upgrade to Fedora 38
+      become: yes
+      command: dnf upgrade download --releasever=38 -y
+      when: current_version.stdout.find("Fedora 37") != -1
+
+    - name: Reboot system
+      become: yes
+      command: dnf system-upgrade reboot -y
+      when: current_version.stdout.find("Fedora 37") != -1
