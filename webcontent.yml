@@ -1,0 +1,83 @@
+- hosts: ericseyden.com
+  become: true
+  tasks:
+    - name: Add webcontent user
+      ansible.builtin.user:
+        name: webcontent
+        groups: webmasters
+
+    - name: Generate Keypair
+      openssh_keypair:
+        path: /home/webcontent/.ssh/id_rsa
+        owner: webcontent
+        group: webcontent
+
+    - name: Set authorized key
+      ansible.posix.authorized_key:
+        user: webcontent
+        state: present
+        key: "{{ lookup('file', lookup('env', 'HOME') + '/.ssh/id_rsa.pub' ) }}"
+
+    - name: Create content directory
+      file:
+        path: /var/www/js/homepage-prod
+        state: directory
+        owner: webcontent
+        group: webmasters
+        mode: "774"
+
+    - name: Check if Volta is installed
+      shell: volta --version
+      become: false
+      remote_user: webcontent
+      register: volta_check
+      changed_when: false
+      failed_when: false
+
+    - name: Setup Volta for Webcontent User
+      become: false
+      remote_user: webcontent
+      shell: "curl https://get.volta.sh | bash"
+      when: volta_check.rc != 0
+
+    - name: Check if Node.js is installed
+      become: false
+      remote_user: webcontent
+      shell: volta which node
+      register: node_check
+      changed_when: false
+      failed_when: false
+
+    - name: Setup Node for Webcontent User
+      become: false
+      remote_user: webcontent
+      shell: "volta install node"
+      when: node_check.rc != 0
+
+    - name: Check if Yarn is installed
+      become: false
+      remote_user: webcontent
+      shell: volta which yarn
+      register: yarn_check
+      changed_when: false
+      failed_when: false
+
+    - name: Setup Yarn for Webcontent User
+      become: false
+      remote_user: webcontent
+      shell: "volta install yarn"
+      when: yarn_check.rc != 0
+
+    - name: Check if PM2 is installed
+      become: false
+      remote_user: webcontent
+      shell: volta which pm2
+      register: pm2_check
+      changed_when: false
+      failed_when: false
+
+    - name: Setup PM2 for Webcontent User
+      become: false
+      remote_user: webcontent
+      shell: "volta install pm2"
+      when: pm2_check.rc != 0
