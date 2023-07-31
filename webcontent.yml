@@ -26,58 +26,12 @@
         group: webmasters
         mode: "774"
 
-    - name: Check if Volta is installed
-      shell: volta --version
-      become: false
-      remote_user: webcontent
-      register: volta_check
-      changed_when: false
-      failed_when: false
+    - name: Install Required Packages
+      package:
+        name:
+          - nodejs
 
-    - name: Setup Volta for Webcontent User
-      become: false
-      remote_user: webcontent
-      shell: "curl https://get.volta.sh | bash"
-      when: volta_check.rc != 0
-
-    - name: Check if Node.js is installed
-      become: false
-      remote_user: webcontent
-      shell: volta which node
-      register: node_check
-      changed_when: false
-      failed_when: false
-
-    - name: Setup Node for Webcontent User
-      become: false
-      remote_user: webcontent
-      shell: "volta install node"
-      when: node_check.rc != 0
-
-    - name: Check if Yarn is installed
-      become: false
-      remote_user: webcontent
-      shell: volta which yarn
-      register: yarn_check
-      changed_when: false
-      failed_when: false
-
-    - name: Setup Yarn for Webcontent User
-      become: false
-      remote_user: webcontent
-      shell: "volta install yarn"
-      when: yarn_check.rc != 0
-
-    - name: Check if PM2 is installed
-      become: false
-      remote_user: webcontent
-      shell: volta which pm2
-      register: pm2_check
-      changed_when: false
-      failed_when: false
-
-    - name: Setup PM2 for Webcontent User
-      become: false
-      remote_user: webcontent
-      shell: "volta install pm2"
-      when: pm2_check.rc != 0
+    - name: Install PM2
+      npm:
+        name: pm2
+        global: true
