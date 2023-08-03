@@ -1,0 +1,12 @@
+- hosts: ericseyden.com
+  become: true
+
+  tasks:
+    - name: Install postgreSQL packages
+      package:
+        - postgresql
+        - postgresql-server
+      state: present
+    
+    - name: 
+  handlers:
