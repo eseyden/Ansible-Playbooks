@@ -5,6 +5,7 @@
       - ericseyden.com
       - fatalexe.com
       - seyden.net
+      - missoulayoga.com
   tasks:
     - name: Add webmasters group
       ansible.builtin.group:

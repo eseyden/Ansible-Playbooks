@@ -1,0 +1,14 @@
+- name: Configure User
+  hosts: ericseyden.com
+  remote_user: root
+  tasks:
+    - name: Add webmasters group
+      ansible.builtin.group:
+        name: webmasters
+        state: present
+
+    - name: Add eseyden user
+      ansible.builtin.user:
+        name: kseyden
+        groups: webmasters
+        generate_ssh_key: yes
