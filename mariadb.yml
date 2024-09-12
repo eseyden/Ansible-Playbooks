@@ -1,0 +1,10 @@
+- name: Configure NariaDB
+  hosts: ericseyden.com
+  become: yes
+  tasks:
+    - name: Install MySQL and dependencies
+      package:
+        name:
+          - mariadb
+          - mariadb-server
+        state: present

@@ -7,8 +7,14 @@
         name: webmasters
         state: present
 
-    - name: Add eseyden user
+    - name: Add kseyden user
       ansible.builtin.user:
         name: kseyden
         groups: webmasters
         generate_ssh_key: yes
+
+    - name: Set authorized key
+      ansible.posix.authorized_key:
+        user: kseyden
+        state: present
+        key: "{{ lookup('file', lookup('env', 'HOME') + '/.ssh/id_rsa.pub' ) }}"
